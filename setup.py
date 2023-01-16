@@ -65,6 +65,7 @@ setup(
     install_requires=[
         'matplotlib==3.*,>=3.2.1',
         'numpy==1.*,>=1.18.2',
+        'openpyxl>=3.0.10',
         'pandas==1.*,>=1.0.3',
         'scipy==1.*,>=1.4.1',
         'uncertainties==3.*,>=3.1.2',
@@ -72,5 +73,6 @@ setup(
     extras_require={
         'dev': [
             'check-manifest',
-            'pre-commit']},
+            'pre-commit',
+            'bump2version']},
 )

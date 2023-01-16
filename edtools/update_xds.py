@@ -33,7 +33,9 @@ def update_xds(fn,
                refine_idx=None,
                refine_integrate=None,
                refine_corr=None,
-               trusted_region=None):
+               trusted_region=None,
+               trusted_pixels=None,
+               reidx=None):
     shutil.copyfile(fn, fn.with_name("XDS.INP~"))
     
     lines = open(fn, "r", encoding = 'cp1252').readlines()
@@ -93,6 +95,8 @@ def update_xds(fn,
             line = pre + line
         elif comment and "SPACE_GROUP_NUMBER" in line:
             line = pre + line
+        elif comment and "REIDX" in line:
+            line = pre + line
         elif comment and "STRONG_PIXEL" in line:
             line = pre + line
         elif comment and "MINIMUM_FRACTION_OF_INDEXED_SPOTS" in line:
@@ -129,12 +133,16 @@ def update_xds(fn,
             line = f"REFINE(CORRECT)=   {' '.join(refine_corr)}\n"
         elif trusted_region and "TRUSTED_REGION" in line:
             line = f"TRUSTED_REGION= {trusted_region[0]} {trusted_region[1]}\n"
+        elif trusted_pixels and "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS" in line:
+            line = f"VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS= {trusted_pixels[0]} {trusted_pixels[1]}\n"
         elif mosaicity and "BEAM_DIVERGENCE_E.S.D." in line:
             HAS_BEAM_DIV_RELF_RANGE = True
             line = f"BEAM_DIVERGENCE_E.S.D.= {mosaicity[0]:.3f}\n"
         elif mosaicity and "REFLECTING_RANGE_E.S.D." in line:
             HAS_BEAM_DIV_RELF_RANGE = True
             line = f"REFLECTING_RANGE_E.S.D.= {mosaicity[1]:.3f}\n"
+        elif reidx and "REIDX=" in line:
+            line = f"REIDX= {' '.join(reidx)}\n"
         if "Cryst." in line:
             line = ""
 
@@ -191,7 +199,7 @@ def main():
 
     parser.add_argument("-f", "--cut-frames",
                         action="store", type=float, dest="cut_frames",
-                        help="Cut the last n percent of frames (deault: 0.0)")
+                        help="Cut the last n*100 percent of frames (deault: 0.0)")
 
     parser.add_argument("-w", "--wfac1",
                         action="store", type=float, dest="wfac1",
@@ -262,15 +270,23 @@ def main():
 
     parser.add_argument("-rint", "--refine_integrate",
                         action="store", type=str, nargs="*", dest="refine_integrate",
-                        help="Comment refine index")
+                        help="Comment refine integrate")
 
     parser.add_argument("-rcorr", "--refine_corr",
                         action="store", type=str, nargs="*", dest="refine_corr",
-                        help="Comment refine index")
+                        help="Comment refine correct")
 
     parser.add_argument("-tr", "--trusted_region",
                         action="store", type=float, nargs=2, dest="trusted_region",
                         help="Update the trusted region.")
+
+    parser.add_argument("-tr_pix", "--trusted_pixels",
+                        action="store", type=float, nargs=2, dest="trusted_pixels",
+                        help="Update the trusted pixels.")
+
+    parser.add_argument("-reidx", "--reidx",
+                        action="store", type=str, nargs=12, dest="reidx",
+                        help="Update the trusted pixels.")
 
     parser.set_defaults(cell=None,
                         spgr=None,
@@ -296,7 +312,9 @@ def main():
                         untrusted=None,
                         corr=None,
                         refine_index=None,
-                        trusted_region=None)
+                        trusted_region=None,
+                        trusted_pixels=None,
+                        reidx=None)
     
     options = parser.parse_args()
     spgr = options.spgr
@@ -327,6 +345,8 @@ def main():
     refine_integrate = options.refine_integrate
     refine_corr = options.refine_corr
     trusted_region = options.trusted_region
+    trusted_pixels = options.trusted_pixels
+    reidx = options.reidx
 
     fns = parse_args_for_fns(fns, name="XDS.INP", match=match)
 
@@ -360,7 +380,9 @@ def main():
                    refine_idx=refine_index,
                    refine_integrate=refine_integrate,
                    refine_corr=refine_corr,
-                   trusted_region=trusted_region)
+                   trusted_region=trusted_region,
+                   trusted_pixels=trusted_pixels,
+                   reidx=reidx)
 
     print(f"\033[KUpdated {len(fns)} files")
 
